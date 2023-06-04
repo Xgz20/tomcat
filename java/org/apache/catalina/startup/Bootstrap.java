@@ -294,6 +294,7 @@ public final class Bootstrap {
             param = new Object[1];
             param[0] = arguments;
         }
+        // 调用Catalina的有参load方法
         Method method =
             catalinaDaemon.getClass().getMethod(methodName, paramTypes);
         if (log.isDebugEnabled()) {
@@ -439,6 +440,7 @@ public final class Bootstrap {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    // Bootstrap init初始化流程
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -469,7 +471,9 @@ public final class Bootstrap {
                 daemon.stop();
             } else if (command.equals("start")) {
                 daemon.setAwait(true);
+                // Bootstrap load加载流程
                 daemon.load(args);
+                // Bootstrap start启动流程
                 daemon.start();
                 if (null == daemon.getServer()) {
                     System.exit(1);

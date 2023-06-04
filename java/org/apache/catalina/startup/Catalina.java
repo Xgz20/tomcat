@@ -384,6 +384,7 @@ public class Catalina {
         digester.setUseContextClassLoader(true);
 
         // Configure the actions we will be using
+        // Server的实现类是StandardServer，并且调用setServer来填充
         digester.addObjectCreate("Server",
                                  "org.apache.catalina.core.StandardServer",
                                  "className");
@@ -406,6 +407,7 @@ public class Catalina {
                             "addLifecycleListener",
                             "org.apache.catalina.LifecycleListener");
 
+        // Service的实现类是StandardService，并调用addService填充
         digester.addObjectCreate("Server/Service",
                                  "org.apache.catalina.core.StandardService",
                                  "className");
@@ -423,6 +425,7 @@ public class Catalina {
                             "org.apache.catalina.LifecycleListener");
 
         //Executor
+        // Executor的实现类是StandardThreadExecutor，并调用addExecutor填充
         digester.addObjectCreate("Server/Service/Executor",
                          "org.apache.catalina.core.StandardThreadExecutor",
                          "className");
@@ -432,6 +435,7 @@ public class Catalina {
                             "addExecutor",
                             "org.apache.catalina.Executor");
 
+        // Connector实现类
         digester.addRule("Server/Service/Connector",
                          new ConnectorCreateRule());
         digester.addSetProperties("Server/Service/Connector",
@@ -573,6 +577,7 @@ public class Catalina {
         }
 
         // Init source location
+        // 初始化server.xml的位置
         File serverXmlLocation = null;
         String xmlClassName = null;
         if (generateCode || useGeneratedCode) {
@@ -595,6 +600,7 @@ public class Catalina {
             }
         }
 
+        // 用 SAXParser 来解析 xml，解析完了之后，xml 里定义的各种标签就有对应的实现类对象了
         ServerXml serverXml = null;
         if (useGeneratedCode) {
             serverXml = (ServerXml) Digester.loadGeneratedClass(xmlClassName);
@@ -605,23 +611,28 @@ public class Catalina {
         } else {
             try (ConfigurationSource.Resource resource = ConfigFileLoader.getSource().getServerXml()) {
                 // Create and execute our Digester
+                // 核心流程，根据server.xml来生成Tomcat中的各个组件对象（Server、Connector等）
                 Digester digester = start ? createStartDigester() : createStopDigester();
                 InputStream inputStream = resource.getInputStream();
                 InputSource inputSource = new InputSource(resource.getURI().toURL().toString());
                 inputSource.setByteStream(inputStream);
                 digester.push(this);
                 if (generateCode) {
+                    // 生成一个ServerXml接口的实现类，这里是类的头部
                     digester.startGeneratingCode();
                     generateClassHeader(digester, start);
                 }
                 digester.parse(inputSource);
                 if (generateCode) {
+                    // 生成类的尾部
                     generateClassFooter(digester);
+                    // 创建生成类的文件（文件名可能是ServerXml.java或者ServerXmlStop.java）
                     try (FileWriter writer = new FileWriter(new File(serverXmlLocation,
                             start ? "ServerXml.java" : "ServerXmlStop.java"))) {
                         writer.write(digester.getGeneratedCode().toString());
                     }
                     digester.endGeneratingCode();
+                    // 将生成的类添加到digester中
                     Digester.addGeneratedClass(xmlClassName);
                 }
             } catch (Exception e) {
@@ -707,6 +718,7 @@ public class Catalina {
 
         // Parse main server.xml
         parseServerXml(true);
+        // Server对象是在parseServerXml()方法中初始化的
         Server s = getServer();
         if (s == null) {
             return;

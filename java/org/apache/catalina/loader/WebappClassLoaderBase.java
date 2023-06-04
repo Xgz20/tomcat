@@ -1521,12 +1521,14 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
 
         state = LifecycleState.STARTING_PREP;
 
+        // 扫描webapp的/WEB-INF/classes
         WebResource[] classesResources = resources.getResources("/WEB-INF/classes");
         for (WebResource classes : classesResources) {
             if (classes.isDirectory() && classes.canRead()) {
                 localRepositories.add(classes.getURL());
             }
         }
+        // 扫描webapp的/WEB-INF/lib
         WebResource[] jars = resources.listResources("/WEB-INF/lib");
         for (WebResource jar : jars) {
             if (jar.getName().endsWith(".jar") && jar.isFile() && jar.canRead()) {
